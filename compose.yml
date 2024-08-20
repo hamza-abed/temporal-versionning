@@ -1,0 +1,37 @@
+services:
+  temporal:
+    container_name: temporal
+    depends_on:
+      - db
+    environment:
+      - DB=postgres
+      - DB_PORT=5432
+      - POSTGRES_USER=flow_orchestrator
+      - POSTGRES_PWD=flow_orchestrator
+      - POSTGRES_SEEDS=db
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+      - BIND_ON_IP=0.0.0.0
+      - TEMPORAL_BROADCAST_ADDRESS=127.0.0.1
+    image: temporalio/auto-setup:1.23
+    ports:
+      - 7233:7233
+    volumes:
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+    healthcheck:
+      test: ["CMD", "temporal", "operator", "cluster", "health"]
+      timeout: 1m
+      interval: 10s
+      retries: 10
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:latest
+    ports:
+      - 8080:8080
+volumes:
+  data01:
+    driver: local
